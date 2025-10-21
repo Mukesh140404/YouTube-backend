@@ -1,4 +1,5 @@
 import {v2 as cloudinary} from 'cloudinary';
+import { log } from 'console';
 import fs from 'fs';
 
 cloudinary.config({ 
@@ -13,7 +14,11 @@ const uploadOnCloudinary = async (localPath) =>{
         const response = await cloudinary.uploader.upload(localPath,{
             resource_type:'auto'
         })
-        console.log("Image uploaded to Cloudinary successfully",response.url);
+        console.log(response);
+        
+        console.log("\n\nCloudinary upload response:", response);
+        // console.log("Image uploaded to Cloudinary successfully",response.url);
+        fs.unlinkSync(localPath);
         return response;
     } catch (error) {
         console.error("Error uploading image to Cloudinary:", error);
