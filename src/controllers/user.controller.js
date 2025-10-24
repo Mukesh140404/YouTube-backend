@@ -152,8 +152,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1,
       },
     },
     {
@@ -219,6 +219,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
+  // console.log(req.body);
+  
   const { oldPassword, newPassword } = req.body;
   const user = await User.findById(req.user._id);
   const isPswdCorrect = await user.isPasswordCorrect(oldPassword);
@@ -262,6 +264,9 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
+  // console.log(req.file);
+
+
   const avatarLocalpath = req.file?.path;
   if (!avatarLocalpath) throw new ApiError(400, "Avatar image is required");
   const avatar = await uploadOnCloudinary(avatarLocalpath);
@@ -308,7 +313,11 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelProfile = asyncHandler(async (req,res)=>{
-  const {username} = req.params
+
+  console.log(req.params)
+  const username = req.params.username;
+  console.log(username);
+  
   if(!username?.trim()) throw new ApiError(400,"username is missing")
 
   const channel = await User.aggregate([
@@ -319,7 +328,7 @@ const getUserChannelProfile = asyncHandler(async (req,res)=>{
     },
     {
       $lookup:{
-        from:"Subscription",
+        from:"subscriptions",
         localField:"_id",
         foreignField:"channel",
         as: "subscribers"
@@ -327,7 +336,7 @@ const getUserChannelProfile = asyncHandler(async (req,res)=>{
     },
     {
       $lookup:{
-        from:"Subscription",
+        from:"subscriptions",
         localField:"_id",
         foreignField:"subscriber",
         as: "subscribeTo"
