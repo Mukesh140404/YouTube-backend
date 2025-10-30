@@ -1,8 +1,12 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { 
+            uploadOnCloudinary,
+            deleteFromCloudinary,
+            asyncHandler,
+            ApiError,
+            ApiResponse,
+            getPublicId
+        } from "../utils/index.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
@@ -38,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   const { fullName, email, username, password } = req.body;
 
-  console.log("\n\nrequest body : ", req.body);
+  // console.log("\n\nrequest body : ", req.body);
   // console.log("email: ",email)
 
   if (
@@ -52,8 +56,6 @@ const registerUser = asyncHandler(async (req, res) => {
   if (existedUser) {
     throw new ApiError(409, "User already exists with this email or username");
   }
-
-  //TODO  : check req.files on console.log
 
   console.log("\n\nrequest files : ", req.files);
 
@@ -266,6 +268,10 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
   // console.log(req.file);
 
+  const publicId = getPublicId(req.user?.avatar)
+  if(!publicId) throw new ApiError(400,"Unauthorized User");
+
+
 
   const avatarLocalpath = req.file?.path;
   if (!avatarLocalpath) throw new ApiError(400, "Avatar image is required");
@@ -273,7 +279,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
   if (!avatar.url) throw new ApiError(400, "Error while uploading on avatar");
 
-  //TODO : previous avatar delete
+
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -284,12 +290,21 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     { new: true }
   ).select("-password");
 
+  const isDeletedFromCloudinary = await deleteFromCloudinary(publicId)
+  if(isDeletedFromCloudinary !== "ok"){
+    console.log("Error in deleting previous avatar from cloud")
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, user, "avatar image updated successfully"));
 });
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
+
+  const publicId = getPublicId(req.user?.coverImage)
+  if(!publicId) throw new ApiError(400,"Unauthorized User");
+
   const coverImageLocalpath = req.file?.path;
   if (!coverImageLocalpath) throw new ApiError(400, "cover image is required");
   const coverImage = await uploadOnCloudinary(coverImageLocalpath);
@@ -306,6 +321,11 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  const isDeletedFromCloudinary = await deleteFromCloudinary(publicId)
+  if(isDeletedFromCloudinary !== "ok"){
+    console.log("Error in deleting previous avatar from cloud")
+  }
 
   return res
     .status(200)
@@ -392,14 +412,14 @@ const getWatchHistory = asyncHandler(async (req,res)=>{
     },
     {
       $lookup:{
-        from:"Video",
+        from:"videos",
         localField:"watchHistory",
         foreignField:"_id",
         as : "watchHistory",
         pipeline:[
           {
             $lookup:{
-              from:"User",
+              from:"users",
               localField:"owner",
               foreignField:"_id",
               as : "owner",
