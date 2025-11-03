@@ -11,4 +11,10 @@ const router = Router()
 
 router.use(verifyJwt)
 
+
+router.route("/all-comments/:videoId").get(getAllComments)
 router.route("/add-comment/:videoId").post(addComment)
+router.route("/update-comment/:videoId").patch(updateComment)
+router.route("/delete-comment/:videoId").delete(deleteComment)
+
+export default router;

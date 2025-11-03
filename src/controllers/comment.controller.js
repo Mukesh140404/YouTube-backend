@@ -1,22 +1,67 @@
 import { Comment } from "../models/comment.models.js"
 import mongoose from "mongoose";
 import { 
-            uploadOnCloudinary,
-            deleteFromCloudinary,
             asyncHandler,
             ApiError,
             ApiResponse,
-            getPublicId
         } from "../utils/index.js";
 
 
 
-//TODO -----------comment controllers-----------
+// -----------comment controllers-----------
 
 //get all comments for a video
 
 const getAllComments = asyncHandler( async (req,res) => {
+    const {videoId} = req.params
+    if(!videoId) throw new ApiError(400,"not valid video reference")
 
+    const comments = await Comment.aggregate([
+        {
+            $match:{
+                video:new mongoose.Types.ObjectId(videoId)
+            }
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"owner",
+                foreignField:"_id",
+                as:"owner",
+                pipeline:[
+                    {
+                        $project:{
+                            username:1,
+                            avatar:1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields:{
+                owner:{
+                    $first:"$owner"
+                }
+            }
+        }
+    ])
+
+    if(!comments.length) throw new ApiError(
+        404,
+        "comments not found"
+    )
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            comments,
+            "all comments fetched successfully"
+        )
+    )
+    
 })
 
 //add comment to a video
@@ -54,10 +99,17 @@ const updateComment = asyncHandler( async (req,res) => {
     const {commentId} = req.params
     if(!commentId) throw new ApiError(400,"Comment Id is not valid")
 
+    const comment = await Comment.findById(commentId)
+    if(!comment) throw new ApiError(404,"Comment Not Found")
+
+    if(req.user._id.toString() !== comment.owner.toString()){
+        throw new ApiError(403,"you are not authorized to update this comment")
+    }
+
     const {content} = req.body
     if(!content) throw new ApiError(400,"content body is required")
 
-    const comment = await Comment.findByIdAndUpdate(
+    const newComment = await Comment.findByIdAndUpdate(
         commentId,
         {
             $set:{
@@ -67,14 +119,14 @@ const updateComment = asyncHandler( async (req,res) => {
         { new : true }
     )
     
-    if(!comment) throw new ApiError(403,"error in updating comment")
+    if(!newComment) throw new ApiError(403,"error in updating comment")
 
     return res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            comment,
+            newComment,
             "Comment Update SuccessFully"
         )
     )
