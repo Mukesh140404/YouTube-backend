@@ -7,7 +7,7 @@ import {
         } from "../utils/index.js";
 
 
-//TODO -----------tweet controllers-----------
+// -----------tweet controllers-----------
 
 //create tweet
 

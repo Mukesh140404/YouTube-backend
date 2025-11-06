@@ -324,12 +324,7 @@ export {
 //delete comment
 
 
-//-----------like controllers-----------
 
-//toggle like on a video
-//toggle comment like
-//toggle tweet like
-//get all liked videos for a user
 
 
 
