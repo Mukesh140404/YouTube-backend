@@ -1,7 +1,7 @@
 import multer from 'multer'
 
 
-//TODO : check all funtion parameters by chatgpt
+// : check all funtion parameters by chatgpt
 
 const storage = multer.diskStorage({
     destination:function (req,file,cb){

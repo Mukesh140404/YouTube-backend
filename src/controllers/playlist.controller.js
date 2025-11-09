@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import { 
             asyncHandler,
             ApiError,
@@ -9,7 +9,7 @@ import { Playlist } from "../models/playlist.models.js"
 
 
 
-//TODO -----------playlist controllers-----------
+//-----------playlist controllers-----------
 
 //create playlist
 
