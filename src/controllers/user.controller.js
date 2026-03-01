@@ -24,6 +24,10 @@ const genrateTokens = async (userId) => {
   }
 };
 
+const checkAuthentication =asyncHandler(async (req,res)=>{
+  
+})
+
 const registerUser = asyncHandler(async (req, res) => {
   // return res.status(200).json({
   //     message: "ok"
@@ -237,6 +241,11 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrentuser = asyncHandler(async (req, res) => {
+  // if(!req.user){
+  //   return res
+  //     .status(401)
+  //     .json(new ApiError(401,"UnAutherized Access"))
+  // }
   return res
     .status(200)
     .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
